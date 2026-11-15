@@ -20,7 +20,7 @@
     <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
       <div>
         <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900">My Recipe Organizer</h1>
-        <p class="text-sm text-stone-600 mt-1">Create recipes, track ingredients, and follow step-by-step preparation summaries.</p>
+        <p class="text-sm text-stone-600 mt-1">Search or enter any food item—get ingredients and step-by-step preparation automatically.</p>
       </div>
       <div class="flex items-center gap-3">
         <span id="recipeCount" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-900">0 recipes</span>
@@ -34,14 +34,14 @@
       <!-- Create Recipe Form -->
       <section id="formPanel" class="lg:col-span-5 bg-white border border-stone-200 rounded-2xl p-5 shadow-sm">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold text-stone-900">Create a Recipe</h2>
+          <h2 class="text-lg font-semibold text-stone-900">Get Steps for Any Dish</h2>
           <button id="closeFormBtn" type="button" class="lg:hidden text-xs text-stone-500 hover:text-stone-800">Hide</button>
         </div>
 
         <form id="recipeForm" class="space-y-4">
           <div>
-            <label for="recipeName" class="block text-xs font-medium text-stone-700 mb-1">Recipe Name</label>
-            <input id="recipeName" type="text" required placeholder="e.g., Masala Omelette"
+            <label for="recipeName" class="block text-xs font-medium text-stone-700 mb-1">Food / Recipe Name</label>
+            <input id="recipeName" type="text" required placeholder="e.g., Chicken Biryani, Pasta, Dosa, Soup"
               class="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500" />
           </div>
 
@@ -69,33 +69,35 @@
           </div>
 
           <div>
-            <label for="ingredients" class="block text-xs font-medium text-stone-700 mb-1">Ingredients <span class="text-stone-400 font-normal">(one per line or comma-separated)</span></label>
-            <textarea id="ingredients" rows="3" required placeholder="2 eggs&#10;1 small onion, finely chopped&#10;1 green chili&#10;Salt &amp; turmeric to taste"
+            <label for="ingredients" class="block text-xs font-medium text-stone-700 mb-1">Ingredients <span class="text-stone-400 font-normal">(optional—leave blank to auto-fill)</span></label>
+            <textarea id="ingredients" rows="3" placeholder="e.g., chicken, onion, garlic, pepper, oil"
               class="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
           </div>
 
-          <div>
-            <label for="steps" class="block text-xs font-medium text-stone-700 mb-1">How to Prepare <span class="text-stone-400 font-normal">(one step per line)</span></label>
-            <textarea id="steps" rows="4" required placeholder="Beat the eggs with salt and turmeric in a bowl.&#10;Mix in chopped onion and green chili.&#10;Heat oil in a pan and pour the mixture.&#10;Cook 2 minutes per side until golden."
-              class="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
+          <div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-900">
+            No need to type cooking steps—the website looks up real recipes or generates step-by-step instructions automatically.
           </div>
 
-          <button type="submit"
+          <button id="submitBtn" type="submit"
             class="w-full py-2.5 px-4 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold transition cursor-pointer">
-            Save Recipe
+            Generate Recipe &amp; Steps
           </button>
         </form>
       </section>
 
-      <!-- Recipe List & Filters -->
+      <!-- Recipe List, Live Search & World Food Explorer -->
       <section class="lg:col-span-7 space-y-4">
         <div class="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm space-y-3">
-          <div class="relative">
-            <input id="searchInput" type="search" placeholder="Search by recipe name or ingredient..."
+          <div class="flex gap-2">
+            <input id="searchInput" type="search" placeholder="Search saved recipes or any food item (e.g., chicken, pasta, curry)..."
               class="w-full rounded-lg border border-stone-300 pl-3.5 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <button id="discoverSearchBtn" type="button" class="px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shrink-0 cursor-pointer">
+              Find Recipes
+            </button>
           </div>
+
           <div id="filterBar" class="flex flex-wrap gap-2">
-            <button type="button" data-meal="All" class="filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-stone-900 text-white cursor-pointer">All</button>
+            <button type="button" data-meal="All" class="filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-stone-900 text-white cursor-pointer">All Saved</button>
             <button type="button" data-meal="Breakfast" class="filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 cursor-pointer">Breakfast</button>
             <button type="button" data-meal="Lunch" class="filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 cursor-pointer">Lunch</button>
             <button type="button" data-meal="Dinner" class="filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 cursor-pointer">Dinner</button>
@@ -103,7 +105,32 @@
           </div>
         </div>
 
+        <!-- Saved Recipes -->
         <div id="recipeList" class="space-y-3"></div>
+
+        <!-- Explore All Food Items -->
+        <div class="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <h2 class="text-sm font-semibold text-stone-900">Explore All Food Items</h2>
+              <p class="text-xs text-stone-500">Pick a category or search above to get step-by-step preparation for any dish.</p>
+            </div>
+            <span id="discoverStatus" class="text-xs text-stone-400"></span>
+          </div>
+
+          <div id="categoryBar" class="flex flex-wrap gap-1.5">
+            <button type="button" data-cat="Chicken" class="cat-btn px-2.5 py-1 rounded-md text-xs font-medium bg-amber-100 text-amber-900 hover:bg-amber-200 cursor-pointer">Chicken</button>
+            <button type="button" data-cat="Vegetarian" class="cat-btn px-2.5 py-1 rounded-md text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 cursor-pointer">Vegetarian</button>
+            <button type="button" data-cat="Seafood" class="cat-btn px-2.5 py-1 rounded-md text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 cursor-pointer">Seafood</button>
+            <button type="button" data-cat="Breakfast" class="cat-btn px-2.5 py-1 rounded-md text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 cursor-pointer">Breakfast</button>
+            <button type="button" data-cat="Pasta" class="cat-btn px-2.5 py-1 rounded-md text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 cursor-pointer">Pasta</button>
+            <button type="button" data-cat="Dessert" class="cat-btn px-2.5 py-1 rounded-md text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 cursor-pointer">Dessert</button>
+            <button type="button" data-cat="Starter" class="cat-btn px-2.5 py-1 rounded-md text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 cursor-pointer">Starter</button>
+            <button type="button" data-cat="Side" class="cat-btn px-2.5 py-1 rounded-md text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 cursor-pointer">Sides</button>
+          </div>
+
+          <div id="discoverList" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+        </div>
       </section>
     </div>
   </div>
@@ -126,8 +153,24 @@
       </div>
 
       <div class="mt-5">
-        <h4 class="text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">How to Prepare</h4>
-        <ol id="modalSteps" class="space-y-2 text-sm text-stone-800 list-decimal list-inside"></ol>
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="text-xs font-semibold uppercase tracking-wider text-stone-500">Step-by-Step Preparation</h4>
+          <span id="stepProgress" class="text-xs font-medium text-amber-700"></span>
+        </div>
+
+        <div class="rounded-xl bg-amber-50 border border-amber-200 p-3.5 mb-3">
+          <p id="activeStepText" class="text-sm font-medium text-stone-900 leading-relaxed"></p>
+          <div class="flex items-center justify-between mt-3">
+            <button id="prevStepBtn" type="button" class="px-3 py-1 rounded-md text-xs font-semibold bg-white border border-stone-300 text-stone-700 hover:bg-stone-100 cursor-pointer disabled:opacity-40">
+              &larr; Previous
+            </button>
+            <button id="nextStepBtn" type="button" class="px-3 py-1 rounded-md text-xs font-semibold bg-amber-600 text-white hover:bg-amber-700 cursor-pointer disabled:opacity-40">
+              Next Step &rarr;
+            </button>
+          </div>
+        </div>
+
+        <ol id="modalSteps" class="space-y-2 text-sm text-stone-700 list-decimal list-inside"></ol>
       </div>
 
       <div class="mt-6 pt-4 border-t border-stone-200 flex items-center justify-between gap-3">
@@ -145,7 +188,7 @@
   <div id="toast" class="fixed bottom-5 right-5 z-50 hidden bg-stone-900 text-white text-xs font-medium px-4 py-2.5 rounded-lg shadow-lg"></div>
 
   <script>
-    const STORAGE_KEY = "recipe_organizer_v1";
+    const STORAGE_KEY = "recipe_organizer_v2";
 
     const DEFAULT_RECIPES = [
       {
@@ -173,7 +216,7 @@
           "Marinate chicken pieces with turmeric, salt, and half the ginger-garlic paste for 10 minutes.",
           "Heat oil in a pan and saute sliced onions with curry leaves until golden brown.",
           "Add remaining ginger-garlic paste and cook for 1 minute until raw smell fades.",
-          "Add marinated chicken, stir well on medium-high heat, and roast 12–15 minutes until cooked through.",
+          "Add marinated chicken, stir well on medium-high heat, and roast 12-15 minutes until cooked through.",
           "Finish with freshly cracked black pepper and toss for 1 minute before serving."
         ]
       },
@@ -197,6 +240,7 @@
     let currentFilter = "All";
     let searchQuery = "";
     let activeRecipeId = null;
+    let activeStepIndex = 0;
 
     function loadRecipes() {
       try {
@@ -215,9 +259,9 @@
       } catch (e) {}
     }
 
-    function parseList(text, allowComma) {
+    function parseList(text) {
       const lines = text.split(/\n+/).map((s) => s.trim()).filter(Boolean);
-      if (allowComma && lines.length === 1 && lines[0].includes(",")) {
+      if (lines.length === 1 && lines[0].includes(",")) {
         return lines[0].split(",").map((s) => s.trim()).filter(Boolean);
       }
       return lines;
@@ -228,7 +272,7 @@
       toast.textContent = msg;
       toast.classList.remove("hidden");
       clearTimeout(toast._timer);
-      toast._timer = setTimeout(() => toast.classList.add("hidden"), 2200);
+      toast._timer = setTimeout(() => toast.classList.add("hidden"), 2500);
     }
 
     function escapeHtml(str) {
@@ -237,6 +281,241 @@
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
+    }
+
+    function extractMealIngredients(mealObj) {
+      const list = [];
+      for (let i = 1; i <= 20; i++) {
+        const ing = (mealObj[`strIngredient${i}`] || "").trim();
+        const meas = (mealObj[`strMeasure${i}`] || "").trim();
+        if (ing) list.push(meas ? `${meas} ${ing}` : ing);
+      }
+      return list;
+    }
+
+    function extractMealSteps(mealObj) {
+      if (!mealObj || !mealObj.strInstructions) return [];
+      return mealObj.strInstructions
+        .split(/\r?\n+/)
+        .flatMap((line) => line.split(/(?<=[.!?])\s+(?=[A-Z])/))
+        .map((s) => s.replace(/^\d+[.)]\s*/, "").trim())
+        .filter((s) => s.length > 8)
+        .slice(0, 10);
+    }
+
+    function mapCategoryToMealType(cat) {
+      if (cat === "Breakfast") return "Breakfast";
+      if (cat === "Starter" || cat === "Side" || cat === "Dessert") return "Snack";
+      return "Dinner";
+    }
+
+    function buildSmartSteps(name, meal, prepTime, userIngredients) {
+      const lower = userIngredients.map((i) => i.toLowerCase());
+      const has = (words) => userIngredients.filter((item, idx) => words.some((w) => lower[idx].includes(w)));
+
+      const aromatics = has(["onion", "garlic", "ginger", "chili", "chilli", "curry leaf", "curry leaves", "tomato", "scallion"]);
+      const proteins = has(["chicken", "egg", "paneer", "tofu", "fish", "prawn", "mutton", "beef", "pork", "lentil", "dal", "beans", "chickpea"]);
+      const spices = has(["masala", "podi", "turmeric", "pepper", "cumin", "coriander", "chili powder", "salt", "spice", "oregano", "herb"]);
+      const bases = has(["rice", "pasta", "noodle", "idli", "dosa", "bread", "roti", "flour", "oats", "potato"]);
+
+      const steps = [];
+      const prepList = userIngredients.length ? userIngredients.join(", ") : "your chosen ingredients";
+      steps.push(`Gather and prep ${prepList}: wash, chop, or measure everything before turning on the stove.`);
+
+      if (aromatics.length > 0) {
+        steps.push(`Heat 1-2 tbsp oil or butter in a pan over medium heat. Saute ${aromatics.join(", ")} for 3-4 minutes until fragrant and softened.`);
+      } else {
+        steps.push(`Warm a pan or pot over medium heat with a splash of oil or butter.`);
+      }
+
+      if (proteins.length > 0) {
+        steps.push(`Add ${proteins.join(", ")} to the pan and cook, stirring occasionally, until seared and cooked through (about ${Math.max(5, Math.round(prepTime * 0.5))} minutes).`);
+      }
+
+      if (bases.length > 0) {
+        steps.push(`Fold in ${bases.join(", ")} and toss gently so it absorbs the flavors evenly.`);
+      }
+
+      if (spices.length > 0) {
+        steps.push(`Season with ${spices.join(", ")} and adjust salt to taste. Simmer or toss on low heat for 2-3 minutes.`);
+      } else {
+        steps.push(`Season with salt and your favorite spices to taste, then cook another 2-3 minutes until well combined.`);
+      }
+
+      steps.push(`Remove from heat and serve your ${name} warm—great for ${meal.toLowerCase()}!`);
+      return steps;
+    }
+
+    async function fetchOrGenerateRecipe(name, meal, prepTime, servings, userIngredients) {
+      try {
+        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(name)}`);
+        if (res.ok) {
+          const data = await res.json();
+          const mealObj = data && Array.isArray(data.meals) && data.meals[0];
+          const rawSteps = extractMealSteps(mealObj);
+          if (rawSteps.length >= 2) {
+            const apiIngredients = extractMealIngredients(mealObj);
+            return {
+              ingredients: userIngredients.length > 0 ? userIngredients : apiIngredients,
+              steps: rawSteps
+            };
+          }
+        }
+      } catch (e) {}
+
+      const finalIngredients = userIngredients.length > 0
+        ? userIngredients
+        : [`Main ingredients for ${name}`, "Oil or butter", "Salt & spices to taste"];
+
+      return {
+        ingredients: finalIngredients,
+        steps: buildSmartSteps(name, meal, prepTime, finalIngredients)
+      };
+    }
+
+    async function loadDiscoverByCategory(cat) {
+      const status = document.getElementById("discoverStatus");
+      const list = document.getElementById("discoverList");
+      status.textContent = "Loading...";
+      try {
+        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${encodeURIComponent(cat)}`);
+        if (!res.ok) throw new Error("Network error");
+        const data = await res.json();
+        const meals = (data && Array.isArray(data.meals) ? data.meals : []).slice(0, 8);
+        status.textContent = `${meals.length} dishes`;
+        renderDiscoverCards(meals, cat);
+      } catch (e) {
+        status.textContent = "Offline";
+        list.innerHTML = `<p class="text-xs text-stone-500 col-span-2">Could not load online recipes right now—use the form on the left to generate steps for any dish!</p>`;
+      }
+    }
+
+    async function searchDiscoverFood(query) {
+      const q = query.trim();
+      if (!q) return;
+      const status = document.getElementById("discoverStatus");
+      const list = document.getElementById("discoverList");
+      status.textContent = "Searching...";
+      try {
+        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(q)}`);
+        if (!res.ok) throw new Error("Network error");
+        const data = await res.json();
+        const meals = (data && Array.isArray(data.meals) ? data.meals : []).slice(0, 8);
+        if (meals.length > 0) {
+          status.textContent = `${meals.length} found`;
+          renderDiscoverCards(meals, "Search");
+        } else {
+          status.textContent = "0 found";
+          list.innerHTML = `
+            <div class="col-span-2 rounded-xl border border-dashed border-stone-300 p-4 flex items-center justify-between gap-3">
+              <span class="text-xs text-stone-600">No exact match in catalog for "<strong>${escapeHtml(q)}</strong>".</span>
+              <button id="quickGenBtn" type="button" class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shrink-0 cursor-pointer">
+                Auto-Generate Steps
+              </button>
+            </div>`;
+          document.getElementById("quickGenBtn").addEventListener("click", () => {
+            const newRecipe = {
+              id: "r_" + Date.now(),
+              name: q,
+              meal: "Dinner",
+              prepTime: 25,
+              servings: 2,
+              ingredients: [`Main ingredients for ${q}`, "Onion & garlic", "Oil or butter", "Salt & spices to taste"],
+              steps: buildSmartSteps(q, "Dinner", 25, [`Main ingredients for ${q}`, "Onion & garlic", "Salt & spices"])
+            };
+            recipes.unshift(newRecipe);
+            saveRecipes();
+            renderRecipes();
+
+    async function syncFromBackend() {
+      try {
+        const res = await fetch("/api/recipes");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            recipes = data;
+            saveRecipes();
+            renderRecipes();
+          }
+        }
+      } catch (e) {}
+    }
+    syncFromBackend();
+            openSummary(newRecipe.id);
+          });
+        }
+      } catch (e) {
+        status.textContent = "Offline";
+      }
+    }
+
+    function renderDiscoverCards(meals, label) {
+      const list = document.getElementById("discoverList");
+      list.innerHTML = meals
+        .map((m) => `
+          <div class="border border-stone-200 rounded-xl p-3 flex items-center justify-between gap-2 hover:border-amber-400 transition">
+            <div class="min-w-0">
+              <p class="text-xs font-semibold text-stone-900 truncate">${escapeHtml(m.strMeal)}</p>
+              <p class="text-[11px] text-stone-500">${escapeHtml(m.strCategory || label)}</p>
+            </div>
+            <button type="button" data-meal-id="${escapeHtml(m.idMeal)}" data-meal-name="${escapeHtml(m.strMeal)}"
+              class="discover-open-btn px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-semibold shrink-0 cursor-pointer">
+              Get Steps
+            </button>
+          </div>
+        `)
+        .join("");
+
+      list.querySelectorAll(".discover-open-btn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const idMeal = btn.getAttribute("data-meal-id");
+          const mealName = btn.getAttribute("data-meal-name");
+          btn.disabled = true;
+          btn.textContent = "Loading...";
+          try {
+            const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${encodeURIComponent(idMeal)}`);
+            const data = await res.json();
+            const mealObj = data && Array.isArray(data.meals) && data.meals[0];
+            if (mealObj) {
+              const ingredients = extractMealIngredients(mealObj);
+              const steps = extractMealSteps(mealObj);
+              const newRecipe = {
+                id: "r_" + Date.now(),
+                name: mealObj.strMeal,
+                meal: mapCategoryToMealType(mealObj.strCategory),
+                prepTime: 25,
+                servings: 2,
+                ingredients: ingredients.length ? ingredients : [`Ingredients for ${mealName}`],
+                steps: steps.length ? steps : buildSmartSteps(mealObj.strMeal, "Dinner", 25, ingredients)
+              };
+              recipes.unshift(newRecipe);
+              saveRecipes();
+              renderRecipes();
+
+    async function syncFromBackend() {
+      try {
+        const res = await fetch("/api/recipes");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            recipes = data;
+            saveRecipes();
+            renderRecipes();
+          }
+        }
+      } catch (e) {}
+    }
+    syncFromBackend();
+              openSummary(newRecipe.id);
+              showToast(`Added ${mealObj.strMeal}!`);
+              return;
+            }
+          } catch (e) {}
+          btn.disabled = false;
+          btn.textContent = "Get Steps";
+          showToast("Could not load that recipe right now.");
+        });
+      });
     }
 
     function renderRecipes() {
@@ -256,8 +535,8 @@
 
       if (filtered.length === 0) {
         list.innerHTML = `
-          <div class="bg-white border border-dashed border-stone-300 rounded-2xl p-8 text-center text-sm text-stone-500">
-            No matching recipes yet. Add one using the form or clear your filter!
+          <div class="bg-white border border-dashed border-stone-300 rounded-2xl p-6 text-center text-sm text-stone-500">
+            No saved recipes match "${escapeHtml(searchQuery || currentFilter)}". Click <strong>Find Recipes</strong> above or use <strong>Explore All Food Items</strong> below!
           </div>`;
         return;
       }
@@ -277,7 +556,7 @@
               </div>
               <p class="text-xs text-stone-600 mt-2.5"><span class="font-medium text-stone-800">Ingredients:</span> ${escapeHtml(previewIng)}</p>
               <p class="text-xs text-stone-600 mt-1 line-clamp-2"><span class="font-medium text-stone-800">Step 1:</span> ${escapeHtml(firstStep)}</p>
-              <div class="mt-3 text-xs font-semibold text-amber-700">View preparation summary &rarr;</div>
+              <div class="mt-3 text-xs font-semibold text-amber-700">Open step-by-step preparation &rarr;</div>
             </article>
           `;
         })
@@ -288,10 +567,28 @@
       });
     }
 
+    function renderActiveStep(recipe) {
+      const total = recipe.steps.length;
+      if (activeStepIndex < 0) activeStepIndex = 0;
+      if (activeStepIndex >= total) activeStepIndex = total - 1;
+
+      document.getElementById("stepProgress").textContent = `Step ${activeStepIndex + 1} of ${total}`;
+      document.getElementById("activeStepText").textContent = recipe.steps[activeStepIndex] || "";
+      document.getElementById("prevStepBtn").disabled = activeStepIndex === 0;
+      document.getElementById("nextStepBtn").disabled = activeStepIndex >= total - 1;
+
+      document.querySelectorAll("#modalSteps li").forEach((li, idx) => {
+        li.className = idx === activeStepIndex
+          ? "leading-relaxed font-semibold text-amber-900 bg-amber-50 rounded px-2 py-1"
+          : "leading-relaxed text-stone-600 px-2 py-0.5 cursor-pointer hover:text-stone-900";
+      });
+    }
+
     function openSummary(id) {
       const recipe = recipes.find((r) => r.id === id);
       if (!recipe) return;
       activeRecipeId = id;
+      activeStepIndex = 0;
 
       document.getElementById("modalMeal").textContent = recipe.meal;
       document.getElementById("modalTitle").textContent = recipe.name;
@@ -310,8 +607,17 @@
 
       const stepsList = document.getElementById("modalSteps");
       stepsList.innerHTML = recipe.steps
-        .map((step) => `<li class="leading-relaxed">${escapeHtml(step)}</li>`)
+        .map((step, idx) => `<li data-step="${idx}">${escapeHtml(step)}</li>`)
         .join("");
+
+      stepsList.querySelectorAll("li").forEach((li) => {
+        li.addEventListener("click", () => {
+          activeStepIndex = parseInt(li.getAttribute("data-step"), 10);
+          renderActiveStep(recipe);
+        });
+      });
+
+      renderActiveStep(recipe);
 
       const modal = document.getElementById("summaryModal");
       modal.classList.remove("hidden");
@@ -325,19 +631,38 @@
       activeRecipeId = null;
     }
 
-    document.getElementById("recipeForm").addEventListener("submit", (e) => {
+    document.getElementById("prevStepBtn").addEventListener("click", () => {
+      const recipe = recipes.find((r) => r.id === activeRecipeId);
+      if (!recipe) return;
+      activeStepIndex -= 1;
+      renderActiveStep(recipe);
+    });
+
+    document.getElementById("nextStepBtn").addEventListener("click", () => {
+      const recipe = recipes.find((r) => r.id === activeRecipeId);
+      if (!recipe) return;
+      activeStepIndex += 1;
+      renderActiveStep(recipe);
+    });
+
+    document.getElementById("recipeForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const name = document.getElementById("recipeName").value.trim();
       const meal = document.getElementById("mealType").value;
-      const prepTime = Math.max(1, parseInt(document.getElementById("prepTime").value, 10) || 15);
+      const prepTime = Math.max(1, parseInt(document.getElementById("prepTime").value, 10) || 20);
       const servings = Math.max(1, parseInt(document.getElementById("servings").value, 10) || 2);
-      const ingredients = parseList(document.getElementById("ingredients").value, true);
-      const steps = parseList(document.getElementById("steps").value, false);
+      const userIngredients = parseList(document.getElementById("ingredients").value);
 
-      if (!name || ingredients.length === 0 || steps.length === 0) {
-        showToast("Please enter a recipe name, ingredients, and preparation steps.");
+      if (!name) {
+        showToast("Please enter a recipe name.");
         return;
       }
+
+      const submitBtn = document.getElementById("submitBtn");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Generating steps...";
+
+      const generated = await fetchOrGenerateRecipe(name, meal, prepTime, servings, userIngredients);
 
       const newRecipe = {
         id: "r_" + Date.now(),
@@ -345,18 +670,36 @@
         meal,
         prepTime,
         servings,
-        ingredients,
-        steps
+        ingredients: generated.ingredients,
+        steps: generated.steps
       };
 
       recipes.unshift(newRecipe);
       saveRecipes();
       fetch('/api/recipes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newRecipe) }).catch(() => {});
       renderRecipes();
+
+    async function syncFromBackend() {
+      try {
+        const res = await fetch("/api/recipes");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            recipes = data;
+            saveRecipes();
+            renderRecipes();
+          }
+        }
+      } catch (e) {}
+    }
+    syncFromBackend();
       e.target.reset();
       document.getElementById("prepTime").value = "20";
       document.getElementById("servings").value = "2";
-      showToast("Recipe saved!");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Generate Recipe & Steps";
+      showToast("Recipe & preparation steps ready!");
+      openSummary(newRecipe.id);
     });
 
     document.getElementById("filterBar").addEventListener("click", (e) => {
@@ -368,11 +711,60 @@
       });
       btn.className = "filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-stone-900 text-white cursor-pointer";
       renderRecipes();
+
+    async function syncFromBackend() {
+      try {
+        const res = await fetch("/api/recipes");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            recipes = data;
+            saveRecipes();
+            renderRecipes();
+          }
+        }
+      } catch (e) {}
+    }
+    syncFromBackend();
     });
 
+    document.getElementById("categoryBar").addEventListener("click", (e) => {
+      const btn = e.target.closest(".cat-btn");
+      if (!btn) return;
+      document.querySelectorAll(".cat-btn").forEach((b) => {
+        b.className = "cat-btn px-2.5 py-1 rounded-md text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 cursor-pointer";
+      });
+      btn.className = "cat-btn px-2.5 py-1 rounded-md text-xs font-medium bg-amber-100 text-amber-900 hover:bg-amber-200 cursor-pointer";
+      loadDiscoverByCategory(btn.getAttribute("data-cat"));
+    });
+
+    document.getElementById("discoverSearchBtn").addEventListener("click", () => {
+      searchDiscoverFood(document.getElementById("searchInput").value);
+    });
+
+    let searchTimer = null;
     document.getElementById("searchInput").addEventListener("input", (e) => {
       searchQuery = e.target.value;
       renderRecipes();
+
+    async function syncFromBackend() {
+      try {
+        const res = await fetch("/api/recipes");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            recipes = data;
+            saveRecipes();
+            renderRecipes();
+          }
+        }
+      } catch (e) {}
+    }
+    syncFromBackend();
+      clearTimeout(searchTimer);
+      if (searchQuery.trim().length >= 3) {
+        searchTimer = setTimeout(() => searchDiscoverFood(searchQuery), 500);
+      }
     });
 
     document.getElementById("closeModalBtn").addEventListener("click", closeSummary);
@@ -388,6 +780,21 @@
       fetch('/api/recipes/' + encodeURIComponent(deletedId), { method: 'DELETE' }).catch(() => {});
       closeSummary();
       renderRecipes();
+
+    async function syncFromBackend() {
+      try {
+        const res = await fetch("/api/recipes");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            recipes = data;
+            saveRecipes();
+            renderRecipes();
+          }
+        }
+      } catch (e) {}
+    }
+    syncFromBackend();
       showToast("Recipe deleted.");
     });
 
@@ -453,6 +860,7 @@
       } catch (e) {}
     }
     syncFromBackend();
+    loadDiscoverByCategory("Chicken");
   </script>
 </body>
 </html>
