@@ -4,117 +4,455 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>My Recipe Organizer</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     body {
-      font-family: sans-serif;
-      max-width: 500px;
-      margin: 40px auto;
-      padding: 0 16px;
-    }
-    input, textarea, select, button {
-      width: 100%;
-      margin-bottom: 10px;
-      padding: 8px;
-      box-sizing: border-box;
-    }
-    .filters {
-      display: flex;
-      gap: 6px;
-      margin: 16px 0 8px;
-    }
-    .filters button {
-      margin-bottom: 0;
-      cursor: pointer;
-    }
-    .filters button.active {
-      background-color: #222;
-      color: #fff;
-    }
-    .recipe-card {
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      padding: 12px;
-      margin-top: 10px;
-    }
-    .badge {
-      display: inline-block;
-      font-size: 12px;
-      background: #eee;
-      padding: 2px 8px;
-      border-radius: 12px;
-      margin-left: 8px;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
   </style>
 </head>
-<body>
-  <h1>My Recipe Organizer</h1>
+<body class="bg-stone-50 text-stone-900 min-h-screen">
+  <div class="max-w-5xl mx-auto px-4 py-6 sm:py-10">
+    <!-- Header -->
+    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900">My Recipe Organizer</h1>
+        <p class="text-sm text-stone-600 mt-1">Create recipes, track ingredients, and follow step-by-step preparation summaries.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="recipeCount" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-900">0 recipes</span>
+        <button id="toggleFormBtn" type="button" class="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-semibold bg-stone-900 text-white hover:bg-stone-800 transition cursor-pointer">
+          + New Recipe
+        </button>
+      </div>
+    </header>
 
-  <input id="recipeName" type="text" placeholder="Recipe name (e.g., Masala Omelette)" />
-  <select id="mealType">
-    <option value="Breakfast">Breakfast</option>
-    <option value="Lunch">Lunch</option>
-    <option value="Dinner">Dinner</option>
-    <option value="Snack">Snack</option>
-  </select>
-  <textarea id="ingredients" rows="3" placeholder="Ingredients (e.g., 2 eggs, onion, chili)"></textarea>
-  <button onclick="addRecipe()">Add Recipe</button>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- Create Recipe Form -->
+      <section id="formPanel" class="lg:col-span-5 bg-white border border-stone-200 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-stone-900">Create a Recipe</h2>
+          <button id="closeFormBtn" type="button" class="lg:hidden text-xs text-stone-500 hover:text-stone-800">Hide</button>
+        </div>
 
-  <div class="filters">
-    <button class="active" onclick="filterRecipes('All', this)">All</button>
-    <button onclick="filterRecipes('Breakfast', this)">Breakfast</button>
-    <button onclick="filterRecipes('Lunch', this)">Lunch</button>
-    <button onclick="filterRecipes('Dinner', this)">Dinner</button>
-    <button onclick="filterRecipes('Snack', this)">Snack</button>
+        <form id="recipeForm" class="space-y-4">
+          <div>
+            <label for="recipeName" class="block text-xs font-medium text-stone-700 mb-1">Recipe Name</label>
+            <input id="recipeName" type="text" required placeholder="e.g., Masala Omelette"
+              class="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500" />
+          </div>
+
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label for="mealType" class="block text-xs font-medium text-stone-700 mb-1">Meal Type</label>
+              <select id="mealType"
+                class="w-full rounded-lg border border-stone-300 px-2.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                <option value="Breakfast">Breakfast</option>
+                <option value="Lunch">Lunch</option>
+                <option value="Dinner">Dinner</option>
+                <option value="Snack">Snack</option>
+              </select>
+            </div>
+            <div>
+              <label for="prepTime" class="block text-xs font-medium text-stone-700 mb-1">Time (mins)</label>
+              <input id="prepTime" type="number" min="1" value="20"
+                class="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            </div>
+            <div>
+              <label for="servings" class="block text-xs font-medium text-stone-700 mb-1">Servings</label>
+              <input id="servings" type="number" min="1" value="2"
+                class="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            </div>
+          </div>
+
+          <div>
+            <label for="ingredients" class="block text-xs font-medium text-stone-700 mb-1">Ingredients <span class="text-stone-400 font-normal">(one per line or comma-separated)</span></label>
+            <textarea id="ingredients" rows="3" required placeholder="2 eggs&#10;1 small onion, finely chopped&#10;1 green chili&#10;Salt &amp; turmeric to taste"
+              class="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
+          </div>
+
+          <div>
+            <label for="steps" class="block text-xs font-medium text-stone-700 mb-1">How to Prepare <span class="text-stone-400 font-normal">(one step per line)</span></label>
+            <textarea id="steps" rows="4" required placeholder="Beat the eggs with salt and turmeric in a bowl.&#10;Mix in chopped onion and green chili.&#10;Heat oil in a pan and pour the mixture.&#10;Cook 2 minutes per side until golden."
+              class="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
+          </div>
+
+          <button type="submit"
+            class="w-full py-2.5 px-4 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold transition cursor-pointer">
+            Save Recipe
+          </button>
+        </form>
+      </section>
+
+      <!-- Recipe List & Filters -->
+      <section class="lg:col-span-7 space-y-4">
+        <div class="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm space-y-3">
+          <div class="relative">
+            <input id="searchInput" type="search" placeholder="Search by recipe name or ingredient..."
+              class="w-full rounded-lg border border-stone-300 pl-3.5 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+          </div>
+          <div id="filterBar" class="flex flex-wrap gap-2">
+            <button type="button" data-meal="All" class="filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-stone-900 text-white cursor-pointer">All</button>
+            <button type="button" data-meal="Breakfast" class="filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 cursor-pointer">Breakfast</button>
+            <button type="button" data-meal="Lunch" class="filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 cursor-pointer">Lunch</button>
+            <button type="button" data-meal="Dinner" class="filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 cursor-pointer">Dinner</button>
+            <button type="button" data-meal="Snack" class="filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 cursor-pointer">Snack</button>
+          </div>
+        </div>
+
+        <div id="recipeList" class="space-y-3"></div>
+      </section>
+    </div>
   </div>
 
-  <div id="recipeList"></div>
+  <!-- Recipe Summary Modal -->
+  <div id="summaryModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/50 p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 shadow-xl border border-stone-200">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <span id="modalMeal" class="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-900 mb-2"></span>
+          <h3 id="modalTitle" class="text-xl font-bold text-stone-900"></h3>
+          <p id="modalMeta" class="text-xs text-stone-500 mt-1"></p>
+        </div>
+        <button id="closeModalBtn" type="button" class="text-stone-400 hover:text-stone-700 text-xl leading-none px-2 py-1 cursor-pointer">&times;</button>
+      </div>
+
+      <div class="mt-5">
+        <h4 class="text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">Ingredients (check off as you prep)</h4>
+        <ul id="modalIngredients" class="space-y-1.5 text-sm text-stone-800"></ul>
+      </div>
+
+      <div class="mt-5">
+        <h4 class="text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">How to Prepare</h4>
+        <ol id="modalSteps" class="space-y-2 text-sm text-stone-800 list-decimal list-inside"></ol>
+      </div>
+
+      <div class="mt-6 pt-4 border-t border-stone-200 flex items-center justify-between gap-3">
+        <button id="copySummaryBtn" type="button" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-stone-100 hover:bg-stone-200 text-stone-800 transition cursor-pointer">
+          Copy Recipe Summary
+        </button>
+        <button id="deleteRecipeBtn" type="button" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-red-50 hover:bg-red-100 text-red-700 transition cursor-pointer">
+          Delete Recipe
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden bg-stone-900 text-white text-xs font-medium px-4 py-2.5 rounded-lg shadow-lg"></div>
 
   <script>
-    const recipes = [];
+    const STORAGE_KEY = "recipe_organizer_v1";
+
+    const DEFAULT_RECIPES = [
+      {
+        id: "r1",
+        name: "Masala Omelette",
+        meal: "Breakfast",
+        prepTime: 10,
+        servings: 1,
+        ingredients: ["2 eggs", "1 small onion, finely chopped", "1 green chili, chopped", "1/4 tsp turmeric", "Salt to taste", "1 tsp oil or butter"],
+        steps: [
+          "Crack the eggs into a bowl and whisk with salt and turmeric until frothy.",
+          "Stir in the chopped onion and green chili.",
+          "Heat oil in a non-stick pan over medium heat.",
+          "Pour in the egg mixture, swirl gently, and cook 2 minutes per side until golden."
+        ]
+      },
+      {
+        id: "r2",
+        name: "Pepper Chicken Fry",
+        meal: "Dinner",
+        prepTime: 30,
+        servings: 2,
+        ingredients: ["300g boneless chicken", "1 large onion, sliced", "1 tbsp ginger-garlic paste", "1 tsp freshly cracked black pepper", "1/2 tsp turmeric", "Curry leaves & salt", "2 tbsp oil"],
+        steps: [
+          "Marinate chicken pieces with turmeric, salt, and half the ginger-garlic paste for 10 minutes.",
+          "Heat oil in a pan and saute sliced onions with curry leaves until golden brown.",
+          "Add remaining ginger-garlic paste and cook for 1 minute until raw smell fades.",
+          "Add marinated chicken, stir well on medium-high heat, and roast 12–15 minutes until cooked through.",
+          "Finish with freshly cracked black pepper and toss for 1 minute before serving."
+        ]
+      },
+      {
+        id: "r3",
+        name: "Masala Podi Idli",
+        meal: "Snack",
+        prepTime: 15,
+        servings: 2,
+        ingredients: ["6 mini or regular idlis, cubed", "2 tbsp idli podi (spice powder)", "1 tbsp ghee or sesame oil", "1/2 tsp mustard seeds", "A few curry leaves"],
+        steps: [
+          "Heat ghee in a wide pan and splutter mustard seeds with curry leaves.",
+          "Toss in the cubed idlis on low heat for 2 minutes.",
+          "Sprinkle idli podi evenly and coat every piece well.",
+          "Serve hot as a quick evening snack."
+        ]
+      }
+    ];
+
+    let recipes = loadRecipes();
     let currentFilter = "All";
+    let searchQuery = "";
+    let activeRecipeId = null;
 
-    function addRecipe() {
-      const nameInput = document.getElementById("recipeName");
-      const mealInput = document.getElementById("mealType");
-      const ingInput = document.getElementById("ingredients");
-
-      const name = nameInput.value.trim();
-      const meal = mealInput.value;
-      const ingredients = ingInput.value.trim();
-
-      if (!name || !ingredients) return;
-
-      recipes.push({ name, meal, ingredients });
-      renderRecipes();
-
-      nameInput.value = "";
-      ingInput.value = "";
+    function loadRecipes() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch (e) {}
+      return DEFAULT_RECIPES.slice();
     }
 
-    function filterRecipes(meal, clickedButton) {
-      currentFilter = meal;
-      document.querySelectorAll(".filters button").forEach((btn) => {
-        btn.classList.remove("active");
-      });
-      clickedButton.classList.add("active");
-      renderRecipes();
+    function saveRecipes() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
+      } catch (e) {}
+    }
+
+    function parseList(text, allowComma) {
+      const lines = text.split(/\n+/).map((s) => s.trim()).filter(Boolean);
+      if (allowComma && lines.length === 1 && lines[0].includes(",")) {
+        return lines[0].split(",").map((s) => s.trim()).filter(Boolean);
+      }
+      return lines;
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.classList.remove("hidden");
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => toast.classList.add("hidden"), 2200);
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
     }
 
     function renderRecipes() {
       const list = document.getElementById("recipeList");
-      list.innerHTML = "";
+      const countEl = document.getElementById("recipeCount");
+      countEl.textContent = `${recipes.length} ${recipes.length === 1 ? "recipe" : "recipes"}`;
 
-      const visible = currentFilter === "All"
-        ? recipes
-        : recipes.filter((r) => r.meal === currentFilter);
+      const q = searchQuery.toLowerCase();
+      const filtered = recipes.filter((r) => {
+        const matchesMeal = currentFilter === "All" || r.meal === currentFilter;
+        const matchesQuery =
+          !q ||
+          r.name.toLowerCase().includes(q) ||
+          r.ingredients.some((i) => i.toLowerCase().includes(q));
+        return matchesMeal && matchesQuery;
+      });
 
-      visible.forEach((recipe) => {
-        const card = document.createElement("div");
-        card.className = "recipe-card";
-        card.innerHTML = `<strong>${recipe.name}</strong><span class="badge">${recipe.meal}</span><p>${recipe.ingredients}</p>`;
-        list.appendChild(card);
+      if (filtered.length === 0) {
+        list.innerHTML = `
+          <div class="bg-white border border-dashed border-stone-300 rounded-2xl p-8 text-center text-sm text-stone-500">
+            No matching recipes yet. Add one using the form or clear your filter!
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = filtered
+        .map((r) => {
+          const previewIng = r.ingredients.slice(0, 4).join(", ") + (r.ingredients.length > 4 ? "..." : "");
+          const firstStep = r.steps[0] || "";
+          return `
+            <article data-id="${escapeHtml(r.id)}" class="recipe-card bg-white border border-stone-200 rounded-2xl p-4 shadow-sm hover:border-amber-400 transition cursor-pointer">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <h3 class="text-base font-semibold text-stone-900">${escapeHtml(r.name)}</h3>
+                  <p class="text-xs text-stone-500 mt-0.5">${r.prepTime} mins &middot; ${r.servings} ${r.servings === 1 ? "serving" : "servings"} &middot; ${r.steps.length} steps</p>
+                </div>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-900 shrink-0">${escapeHtml(r.meal)}</span>
+              </div>
+              <p class="text-xs text-stone-600 mt-2.5"><span class="font-medium text-stone-800">Ingredients:</span> ${escapeHtml(previewIng)}</p>
+              <p class="text-xs text-stone-600 mt-1 line-clamp-2"><span class="font-medium text-stone-800">Step 1:</span> ${escapeHtml(firstStep)}</p>
+              <div class="mt-3 text-xs font-semibold text-amber-700">View preparation summary &rarr;</div>
+            </article>
+          `;
+        })
+        .join("");
+
+      list.querySelectorAll(".recipe-card").forEach((card) => {
+        card.addEventListener("click", () => openSummary(card.getAttribute("data-id")));
       });
     }
+
+    function openSummary(id) {
+      const recipe = recipes.find((r) => r.id === id);
+      if (!recipe) return;
+      activeRecipeId = id;
+
+      document.getElementById("modalMeal").textContent = recipe.meal;
+      document.getElementById("modalTitle").textContent = recipe.name;
+      document.getElementById("modalMeta").textContent = `${recipe.prepTime} mins · ${recipe.servings} ${recipe.servings === 1 ? "serving" : "servings"}`;
+
+      const ingList = document.getElementById("modalIngredients");
+      ingList.innerHTML = recipe.ingredients
+        .map(
+          (item, idx) => `
+          <li class="flex items-start gap-2">
+            <input id="ing-${idx}" type="checkbox" class="mt-1 rounded border-stone-300 text-amber-600 focus:ring-amber-500 cursor-pointer" />
+            <label for="ing-${idx}" class="cursor-pointer select-none">${escapeHtml(item)}</label>
+          </li>`
+        )
+        .join("");
+
+      const stepsList = document.getElementById("modalSteps");
+      stepsList.innerHTML = recipe.steps
+        .map((step) => `<li class="leading-relaxed">${escapeHtml(step)}</li>`)
+        .join("");
+
+      const modal = document.getElementById("summaryModal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeSummary() {
+      const modal = document.getElementById("summaryModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+      activeRecipeId = null;
+    }
+
+    document.getElementById("recipeForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = document.getElementById("recipeName").value.trim();
+      const meal = document.getElementById("mealType").value;
+      const prepTime = Math.max(1, parseInt(document.getElementById("prepTime").value, 10) || 15);
+      const servings = Math.max(1, parseInt(document.getElementById("servings").value, 10) || 2);
+      const ingredients = parseList(document.getElementById("ingredients").value, true);
+      const steps = parseList(document.getElementById("steps").value, false);
+
+      if (!name || ingredients.length === 0 || steps.length === 0) {
+        showToast("Please enter a recipe name, ingredients, and preparation steps.");
+        return;
+      }
+
+      const newRecipe = {
+        id: "r_" + Date.now(),
+        name,
+        meal,
+        prepTime,
+        servings,
+        ingredients,
+        steps
+      };
+
+      recipes.unshift(newRecipe);
+      saveRecipes();
+      fetch('/api/recipes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newRecipe) }).catch(() => {});
+      renderRecipes();
+      e.target.reset();
+      document.getElementById("prepTime").value = "20";
+      document.getElementById("servings").value = "2";
+      showToast("Recipe saved!");
+    });
+
+    document.getElementById("filterBar").addEventListener("click", (e) => {
+      const btn = e.target.closest(".filter-btn");
+      if (!btn) return;
+      currentFilter = btn.getAttribute("data-meal");
+      document.querySelectorAll(".filter-btn").forEach((b) => {
+        b.className = "filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 cursor-pointer";
+      });
+      btn.className = "filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-stone-900 text-white cursor-pointer";
+      renderRecipes();
+    });
+
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+      searchQuery = e.target.value;
+      renderRecipes();
+    });
+
+    document.getElementById("closeModalBtn").addEventListener("click", closeSummary);
+    document.getElementById("summaryModal").addEventListener("click", (e) => {
+      if (e.target.id === "summaryModal") closeSummary();
+    });
+
+    document.getElementById("deleteRecipeBtn").addEventListener("click", () => {
+      if (!activeRecipeId) return;
+      const deletedId = activeRecipeId;
+      recipes = recipes.filter((r) => r.id !== deletedId);
+      saveRecipes();
+      fetch('/api/recipes/' + encodeURIComponent(deletedId), { method: 'DELETE' }).catch(() => {});
+      closeSummary();
+      renderRecipes();
+      showToast("Recipe deleted.");
+    });
+
+    document.getElementById("copySummaryBtn").addEventListener("click", () => {
+      const r = recipes.find((item) => item.id === activeRecipeId);
+      if (!r) return;
+      const summary = [
+        `${r.name} (${r.meal} · ${r.prepTime} mins · ${r.servings} servings)`,
+        "",
+        "Ingredients:",
+        ...r.ingredients.map((i) => `- ${i}`),
+        "",
+        "How to Prepare:",
+        ...r.steps.map((s, idx) => `${idx + 1}. ${s}`)
+      ].join("\n");
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(summary).then(() => showToast("Summary copied!")).catch(() => fallbackCopy(summary));
+      } else {
+        fallbackCopy(summary);
+      }
+    });
+
+    function fallbackCopy(text) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+        showToast("Summary copied!");
+      } catch (e) {
+        showToast("Could not copy automatically.");
+      }
+      document.body.removeChild(ta);
+    }
+
+    document.getElementById("toggleFormBtn").addEventListener("click", () => {
+      const panel = document.getElementById("formPanel");
+      panel.classList.toggle("hidden");
+      if (!panel.classList.contains("hidden")) {
+        document.getElementById("recipeName").focus();
+      }
+    });
+
+    document.getElementById("closeFormBtn").addEventListener("click", () => {
+      document.getElementById("formPanel").classList.add("hidden");
+    });
+
+    renderRecipes();
+
+    async function syncFromBackend() {
+      try {
+        const res = await fetch("/api/recipes");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            recipes = data;
+            saveRecipes();
+            renderRecipes();
+          }
+        }
+      } catch (e) {}
+    }
+    syncFromBackend();
   </script>
 </body>
 </html>
