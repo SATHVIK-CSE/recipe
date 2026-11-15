@@ -11,11 +11,24 @@
       margin: 40px auto;
       padding: 0 16px;
     }
-    input, textarea, button {
+    input, textarea, select, button {
       width: 100%;
       margin-bottom: 10px;
       padding: 8px;
       box-sizing: border-box;
+    }
+    .filters {
+      display: flex;
+      gap: 6px;
+      margin: 16px 0 8px;
+    }
+    .filters button {
+      margin-bottom: 0;
+      cursor: pointer;
+    }
+    .filters button.active {
+      background-color: #222;
+      color: #fff;
     }
     .recipe-card {
       border: 1px solid #ddd;
@@ -23,34 +36,84 @@
       padding: 12px;
       margin-top: 10px;
     }
+    .badge {
+      display: inline-block;
+      font-size: 12px;
+      background: #eee;
+      padding: 2px 8px;
+      border-radius: 12px;
+      margin-left: 8px;
+    }
   </style>
 </head>
 <body>
   <h1>My Recipe Organizer</h1>
 
   <input id="recipeName" type="text" placeholder="Recipe name (e.g., Masala Omelette)" />
+  <select id="mealType">
+    <option value="Breakfast">Breakfast</option>
+    <option value="Lunch">Lunch</option>
+    <option value="Dinner">Dinner</option>
+    <option value="Snack">Snack</option>
+  </select>
   <textarea id="ingredients" rows="3" placeholder="Ingredients (e.g., 2 eggs, onion, chili)"></textarea>
   <button onclick="addRecipe()">Add Recipe</button>
+
+  <div class="filters">
+    <button class="active" onclick="filterRecipes('All', this)">All</button>
+    <button onclick="filterRecipes('Breakfast', this)">Breakfast</button>
+    <button onclick="filterRecipes('Lunch', this)">Lunch</button>
+    <button onclick="filterRecipes('Dinner', this)">Dinner</button>
+    <button onclick="filterRecipes('Snack', this)">Snack</button>
+  </div>
 
   <div id="recipeList"></div>
 
   <script>
+    const recipes = [];
+    let currentFilter = "All";
+
     function addRecipe() {
       const nameInput = document.getElementById("recipeName");
+      const mealInput = document.getElementById("mealType");
       const ingInput = document.getElementById("ingredients");
+
       const name = nameInput.value.trim();
+      const meal = mealInput.value;
       const ingredients = ingInput.value.trim();
 
       if (!name || !ingredients) return;
 
-      const card = document.createElement("div");
-      card.className = "recipe-card";
-      card.innerHTML = `<strong>${name}</strong><p>${ingredients}</p>`;
-
-      document.getElementById("recipeList").appendChild(card);
+      recipes.push({ name, meal, ingredients });
+      renderRecipes();
 
       nameInput.value = "";
       ingInput.value = "";
+    }
+
+    function filterRecipes(meal, clickedButton) {
+      currentFilter = meal;
+      document.querySelectorAll(".filters button").forEach((btn) => {
+        btn.classList.remove("active");
+      });
+      clickedButton.classList.add("active");
+      renderRecipes();
+    }
+
+    function renderRecipes() {
+      const list = document.getElementById("recipeList");
+      list.innerHTML = "";
+
+      const visible = currentFilter === "All"
+        ? recipes
+        : recipes.filter((r) => r.meal === currentFilter);
+
+      visible.forEach((recipe) => {
+        const card = document.createElement("div");
+        card.className = "recipe-card";
+        card.innerHTML = `<strong>${recipe.name}</strong><span class="badge">${recipe.meal}</span><p>${recipe.ingredients}</p>`;
+        list.appendChild(card);
+      });
     }
   </script>
 </body>
