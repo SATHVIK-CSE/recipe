@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Recipe Organizer</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 500px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+    input, textarea, button {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+    .recipe-card {
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>My Recipe Organizer</h1>
+
+  <input id="recipeName" type="text" placeholder="Recipe name (e.g., Masala Omelette)" />
+  <textarea id="ingredients" rows="3" placeholder="Ingredients (e.g., 2 eggs, onion, chili)"></textarea>
+  <button onclick="addRecipe()">Add Recipe</button>
+
+  <div id="recipeList"></div>
+
+  <script>
+    function addRecipe() {
+      const nameInput = document.getElementById("recipeName");
+      const ingInput = document.getElementById("ingredients");
+      const name = nameInput.value.trim();
+      const ingredients = ingInput.value.trim();
+
+      if (!name || !ingredients) return;
+
+      const card = document.createElement("div");
+      card.className = "recipe-card";
+      card.innerHTML = `<strong>${name}</strong><p>${ingredients}</p>`;
+
+      document.getElementById("recipeList").appendChild(card);
+
+      nameInput.value = "";
+      ingInput.value = "";
+    }
+  </script>
+</body>
+</html>
