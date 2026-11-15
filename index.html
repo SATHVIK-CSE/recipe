@@ -248,7 +248,16 @@
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) return parsed;
+          if (Array.isArray(parsed)) {
+            return parsed.map((r, idx) => {
+              const name = (r && r.name) || "Untitled Recipe";
+              const meal = (r && r.meal) || "Dinner";
+              const prepTime = (r && r.prepTime) || 20;
+              const ingredients = Array.isArray(r && r.ingredients) ? r.ingredients : [];
+              const steps = Array.isArray(r && r.steps) && r.steps.length ? r.steps : buildSmartSteps(name, meal, prepTime, ingredients);
+              return { id: (r && r.id) || ("r_" + idx), name, meal, prepTime, servings: (r && r.servings) || 2, ingredients, steps };
+            });
+          }
         }
       } catch (e) {}
       return DEFAULT_RECIPES.slice();
@@ -287,8 +296,9 @@
     function extractMealIngredients(mealObj) {
       const list = [];
       for (let i = 1; i <= 20; i++) {
-        const ing = (mealObj[`strIngredient${i}`] \vert{}\vert{} "").trim(); const meas = (mealObj[`strMeasure${i}`] || "").trim();
-        if (ing) list.push(meas ? `${meas}${ing}` : ing);
+        const ing = (mealObj[`strIngredient${i}`] || "").trim();
+        const meas = (mealObj[`strMeasure${i}`] || "").trim();
+        if (ing) list.push(meas ? `${meas} ${ing}` : ing);
       }
       return list;
     }
@@ -342,7 +352,23 @@
         steps.push(`Season with salt and your favorite spices to taste, then cook another 2-3 minutes until well combined.`);
       }
 
-      steps.push(`Remove from heat and serve your ${name} warm—great for ${meal.toLowerCase()}!`); return steps; }  async function fetchOrGenerateRecipe(name, meal, prepTime, servings, userIngredients) { try { const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(name)}`);
+      steps.push(`Remove from heat and serve your ${name} warm—great for ${meal.toLowerCase()}!`);
+      return steps;
+    }
+
+    async function fetchWithTimeout(url, ms = 2500) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), ms);
+      try {
+        return await fetch(url, { signal: controller.signal });
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    async function fetchOrGenerateRecipe(name, meal, prepTime, servings, userIngredients) {
+      try {
+        const res = await fetchWithTimeout(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(name)}`);
         if (res.ok) {
           const data = await res.json();
           const mealObj = data && Array.isArray(data.meals) && data.meals[0];
@@ -372,7 +398,11 @@
       const list = document.getElementById("discoverList");
       status.textContent = "Loading...";
       try {
-        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${encodeURIComponent(cat)}`); if (!res.ok) throw new Error("Network error"); const data = await res.json(); const meals = (data && Array.isArray(data.meals) ? data.meals : []).slice(0, 8); status.textContent = `${meals.length} dishes`;
+        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${encodeURIComponent(cat)}`);
+        if (!res.ok) throw new Error("Network error");
+        const data = await res.json();
+        const meals = (data && Array.isArray(data.meals) ? data.meals : []).slice(0, 8);
+        status.textContent = `${meals.length} dishes`;
         renderDiscoverCards(meals, cat);
       } catch (e) {
         status.textContent = "Offline";
@@ -387,7 +417,12 @@
       const list = document.getElementById("discoverList");
       status.textContent = "Searching...";
       try {
-        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(q)}`); if (!res.ok) throw new Error("Network error"); const data = await res.json(); const meals = (data && Array.isArray(data.meals) ? data.meals : []).slice(0, 8); if (meals.length > 0) { status.textContent = `${meals.length} found`;
+        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(q)}`);
+        if (!res.ok) throw new Error("Network error");
+        const data = await res.json();
+        const meals = (data && Array.isArray(data.meals) ? data.meals : []).slice(0, 8);
+        if (meals.length > 0) {
+          status.textContent = `${meals.length} found`;
           renderDiscoverCards(meals, "Search");
         } else {
           status.textContent = "0 found";
@@ -411,6 +446,21 @@
             recipes.unshift(newRecipe);
             saveRecipes();
             renderRecipes();
+
+    async function syncFromBackend() {
+      try {
+        const res = await fetch("/api/recipes");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            recipes = data;
+            saveRecipes();
+            renderRecipes();
+          }
+        }
+      } catch (e) {}
+    }
+    syncFromBackend();
             openSummary(newRecipe.id);
           });
         }
@@ -443,4 +493,399 @@
           btn.disabled = true;
           btn.textContent = "Loading...";
           try {
-            const res = await fetch(`
+            const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${encodeURIComponent(idMeal)}`);
+            const data = await res.json();
+            const mealObj = data && Array.isArray(data.meals) && data.meals[0];
+            if (mealObj) {
+              const ingredients = extractMealIngredients(mealObj);
+              const steps = extractMealSteps(mealObj);
+              const newRecipe = {
+                id: "r_" + Date.now(),
+                name: mealObj.strMeal,
+                meal: mapCategoryToMealType(mealObj.strCategory),
+                prepTime: 25,
+                servings: 2,
+                ingredients: ingredients.length ? ingredients : [`Ingredients for ${mealName}`],
+                steps: steps.length ? steps : buildSmartSteps(mealObj.strMeal, "Dinner", 25, ingredients)
+              };
+              recipes.unshift(newRecipe);
+              saveRecipes();
+              renderRecipes();
+
+    async function syncFromBackend() {
+      try {
+        const res = await fetch("/api/recipes");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            recipes = data;
+            saveRecipes();
+            renderRecipes();
+          }
+        }
+      } catch (e) {}
+    }
+    syncFromBackend();
+              openSummary(newRecipe.id);
+              showToast(`Added ${mealObj.strMeal}!`);
+              return;
+            }
+          } catch (e) {}
+          btn.disabled = false;
+          btn.textContent = "Get Steps";
+          showToast("Could not load that recipe right now.");
+        });
+      });
+    }
+
+    function renderRecipes() {
+      const list = document.getElementById("recipeList");
+      const countEl = document.getElementById("recipeCount");
+      countEl.textContent = `${recipes.length} ${recipes.length === 1 ? "recipe" : "recipes"}`;
+
+      const q = searchQuery.toLowerCase();
+      const filtered = recipes.filter((r) => {
+        const matchesMeal = currentFilter === "All" || r.meal === currentFilter;
+        const matchesQuery =
+          !q ||
+          r.name.toLowerCase().includes(q) ||
+          r.ingredients.some((i) => i.toLowerCase().includes(q));
+        return matchesMeal && matchesQuery;
+      });
+
+      if (filtered.length === 0) {
+        list.innerHTML = `
+          <div class="bg-white border border-dashed border-stone-300 rounded-2xl p-6 text-center text-sm text-stone-500">
+            No saved recipes match "${escapeHtml(searchQuery || currentFilter)}". Click <strong>Find Recipes</strong> above or use <strong>Explore All Food Items</strong> below!
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = filtered
+        .map((r) => {
+          const previewIng = r.ingredients.slice(0, 4).join(", ") + (r.ingredients.length > 4 ? "..." : "");
+          const firstStep = r.steps[0] || "";
+          return `
+            <article data-id="${escapeHtml(r.id)}" class="recipe-card bg-white border border-stone-200 rounded-2xl p-4 shadow-sm hover:border-amber-400 transition cursor-pointer">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <h3 class="text-base font-semibold text-stone-900">${escapeHtml(r.name)}</h3>
+                  <p class="text-xs text-stone-500 mt-0.5">${r.prepTime} mins &middot; ${r.servings} ${r.servings === 1 ? "serving" : "servings"} &middot; ${r.steps.length} steps</p>
+                </div>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-900 shrink-0">${escapeHtml(r.meal)}</span>
+              </div>
+              <p class="text-xs text-stone-600 mt-2.5"><span class="font-medium text-stone-800">Ingredients:</span> ${escapeHtml(previewIng)}</p>
+              <div class="mt-2.5 bg-stone-50 rounded-xl p-3 border border-stone-100">
+                <p class="text-[11px] font-semibold uppercase tracking-wider text-stone-500 mb-1">How to Prepare</p>
+                <ol class="text-xs text-stone-700 space-y-1 list-decimal list-inside">
+                  ${r.steps.map((s) => `<li>${escapeHtml(s)}</li>`).join("")}
+                </ol>
+              </div>
+              <div class="mt-2.5 text-xs font-semibold text-amber-700">Open interactive cooking mode &rarr;</div>
+            </article>
+          `;
+        })
+        .join("");
+
+      list.querySelectorAll(".recipe-card").forEach((card) => {
+        card.addEventListener("click", () => openSummary(card.getAttribute("data-id")));
+      });
+    }
+
+    function renderActiveStep(recipe) {
+      const total = recipe.steps.length;
+      if (activeStepIndex < 0) activeStepIndex = 0;
+      if (activeStepIndex >= total) activeStepIndex = total - 1;
+
+      document.getElementById("stepProgress").textContent = `Step ${activeStepIndex + 1} of ${total}`;
+      document.getElementById("activeStepText").textContent = recipe.steps[activeStepIndex] || "";
+      document.getElementById("prevStepBtn").disabled = activeStepIndex === 0;
+      document.getElementById("nextStepBtn").disabled = activeStepIndex >= total - 1;
+
+      document.querySelectorAll("#modalSteps li").forEach((li, idx) => {
+        li.className = idx === activeStepIndex
+          ? "leading-relaxed font-semibold text-amber-900 bg-amber-50 rounded px-2 py-1"
+          : "leading-relaxed text-stone-600 px-2 py-0.5 cursor-pointer hover:text-stone-900";
+      });
+    }
+
+    function openSummary(id) {
+      const recipe = recipes.find((r) => r.id === id);
+      if (!recipe) return;
+      activeRecipeId = id;
+      activeStepIndex = 0;
+
+      document.getElementById("modalMeal").textContent = recipe.meal;
+      document.getElementById("modalTitle").textContent = recipe.name;
+      document.getElementById("modalMeta").textContent = `${recipe.prepTime} mins · ${recipe.servings} ${recipe.servings === 1 ? "serving" : "servings"}`;
+
+      const ingList = document.getElementById("modalIngredients");
+      ingList.innerHTML = recipe.ingredients
+        .map(
+          (item, idx) => `
+          <li class="flex items-start gap-2">
+            <input id="ing-${idx}" type="checkbox" class="mt-1 rounded border-stone-300 text-amber-600 focus:ring-amber-500 cursor-pointer" />
+            <label for="ing-${idx}" class="cursor-pointer select-none">${escapeHtml(item)}</label>
+          </li>`
+        )
+        .join("");
+
+      const stepsList = document.getElementById("modalSteps");
+      stepsList.innerHTML = recipe.steps
+        .map((step, idx) => `<li data-step="${idx}">${escapeHtml(step)}</li>`)
+        .join("");
+
+      stepsList.querySelectorAll("li").forEach((li) => {
+        li.addEventListener("click", () => {
+          activeStepIndex = parseInt(li.getAttribute("data-step"), 10);
+          renderActiveStep(recipe);
+        });
+      });
+
+      renderActiveStep(recipe);
+
+      const modal = document.getElementById("summaryModal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeSummary() {
+      const modal = document.getElementById("summaryModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+      activeRecipeId = null;
+    }
+
+    document.getElementById("prevStepBtn").addEventListener("click", () => {
+      const recipe = recipes.find((r) => r.id === activeRecipeId);
+      if (!recipe) return;
+      activeStepIndex -= 1;
+      renderActiveStep(recipe);
+    });
+
+    document.getElementById("nextStepBtn").addEventListener("click", () => {
+      const recipe = recipes.find((r) => r.id === activeRecipeId);
+      if (!recipe) return;
+      activeStepIndex += 1;
+      renderActiveStep(recipe);
+    });
+
+    document.getElementById("recipeForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("recipeName").value.trim();
+      const meal = document.getElementById("mealType").value;
+      const prepTime = Math.max(1, parseInt(document.getElementById("prepTime").value, 10) || 20);
+      const servings = Math.max(1, parseInt(document.getElementById("servings").value, 10) || 2);
+      const userIngredients = parseList(document.getElementById("ingredients").value);
+
+      if (!name) {
+        showToast("Please enter a recipe name.");
+        return;
+      }
+
+      const submitBtn = document.getElementById("submitBtn");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Generating steps...";
+
+      const generated = await fetchOrGenerateRecipe(name, meal, prepTime, servings, userIngredients);
+
+      const newRecipe = {
+        id: "r_" + Date.now(),
+        name,
+        meal,
+        prepTime,
+        servings,
+        ingredients: generated.ingredients,
+        steps: generated.steps
+      };
+
+      recipes.unshift(newRecipe);
+      saveRecipes();
+      fetch('/api/recipes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newRecipe) }).catch(() => {});
+      renderRecipes();
+
+    async function syncFromBackend() {
+      try {
+        const res = await fetch("/api/recipes");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            recipes = data;
+            saveRecipes();
+            renderRecipes();
+          }
+        }
+      } catch (e) {}
+    }
+    syncFromBackend();
+      e.target.reset();
+      document.getElementById("prepTime").value = "20";
+      document.getElementById("servings").value = "2";
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Generate Recipe & Steps";
+      showToast("Recipe & preparation steps ready!");
+      openSummary(newRecipe.id);
+    });
+
+    document.getElementById("filterBar").addEventListener("click", (e) => {
+      const btn = e.target.closest(".filter-btn");
+      if (!btn) return;
+      currentFilter = btn.getAttribute("data-meal");
+      document.querySelectorAll(".filter-btn").forEach((b) => {
+        b.className = "filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 cursor-pointer";
+      });
+      btn.className = "filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-stone-900 text-white cursor-pointer";
+      renderRecipes();
+
+    async function syncFromBackend() {
+      try {
+        const res = await fetch("/api/recipes");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            recipes = data;
+            saveRecipes();
+            renderRecipes();
+          }
+        }
+      } catch (e) {}
+    }
+    syncFromBackend();
+    });
+
+    document.getElementById("categoryBar").addEventListener("click", (e) => {
+      const btn = e.target.closest(".cat-btn");
+      if (!btn) return;
+      document.querySelectorAll(".cat-btn").forEach((b) => {
+        b.className = "cat-btn px-2.5 py-1 rounded-md text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 cursor-pointer";
+      });
+      btn.className = "cat-btn px-2.5 py-1 rounded-md text-xs font-medium bg-amber-100 text-amber-900 hover:bg-amber-200 cursor-pointer";
+      loadDiscoverByCategory(btn.getAttribute("data-cat"));
+    });
+
+    document.getElementById("discoverSearchBtn").addEventListener("click", () => {
+      searchDiscoverFood(document.getElementById("searchInput").value);
+    });
+
+    let searchTimer = null;
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+      searchQuery = e.target.value;
+      renderRecipes();
+
+    async function syncFromBackend() {
+      try {
+        const res = await fetch("/api/recipes");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            recipes = data;
+            saveRecipes();
+            renderRecipes();
+          }
+        }
+      } catch (e) {}
+    }
+    syncFromBackend();
+      clearTimeout(searchTimer);
+      if (searchQuery.trim().length >= 3) {
+        searchTimer = setTimeout(() => searchDiscoverFood(searchQuery), 500);
+      }
+    });
+
+    document.getElementById("closeModalBtn").addEventListener("click", closeSummary);
+    document.getElementById("summaryModal").addEventListener("click", (e) => {
+      if (e.target.id === "summaryModal") closeSummary();
+    });
+
+    document.getElementById("deleteRecipeBtn").addEventListener("click", () => {
+      if (!activeRecipeId) return;
+      const deletedId = activeRecipeId;
+      recipes = recipes.filter((r) => r.id !== deletedId);
+      saveRecipes();
+      fetch('/api/recipes/' + encodeURIComponent(deletedId), { method: 'DELETE' }).catch(() => {});
+      closeSummary();
+      renderRecipes();
+
+    async function syncFromBackend() {
+      try {
+        const res = await fetch("/api/recipes");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            recipes = data;
+            saveRecipes();
+            renderRecipes();
+          }
+        }
+      } catch (e) {}
+    }
+    syncFromBackend();
+      showToast("Recipe deleted.");
+    });
+
+    document.getElementById("copySummaryBtn").addEventListener("click", () => {
+      const r = recipes.find((item) => item.id === activeRecipeId);
+      if (!r) return;
+      const summary = [
+        `${r.name} (${r.meal} · ${r.prepTime} mins · ${r.servings} servings)`,
+        "",
+        "Ingredients:",
+        ...r.ingredients.map((i) => `- ${i}`),
+        "",
+        "How to Prepare:",
+        ...r.steps.map((s, idx) => `${idx + 1}. ${s}`)
+      ].join("\n");
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(summary).then(() => showToast("Summary copied!")).catch(() => fallbackCopy(summary));
+      } else {
+        fallbackCopy(summary);
+      }
+    });
+
+    function fallbackCopy(text) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+        showToast("Summary copied!");
+      } catch (e) {
+        showToast("Could not copy automatically.");
+      }
+      document.body.removeChild(ta);
+    }
+
+    document.getElementById("toggleFormBtn").addEventListener("click", () => {
+      const panel = document.getElementById("formPanel");
+      panel.classList.toggle("hidden");
+      if (!panel.classList.contains("hidden")) {
+        document.getElementById("recipeName").focus();
+      }
+    });
+
+    document.getElementById("closeFormBtn").addEventListener("click", () => {
+      document.getElementById("formPanel").classList.add("hidden");
+    });
+
+    renderRecipes();
+
+    async function syncFromBackend() {
+      try {
+        const res = await fetch("/api/recipes");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            recipes = data;
+            saveRecipes();
+            renderRecipes();
+          }
+        }
+      } catch (e) {}
+    }
+    syncFromBackend();
+    loadDiscoverByCategory("Chicken");
+  </script>
+</body>
+</html>
